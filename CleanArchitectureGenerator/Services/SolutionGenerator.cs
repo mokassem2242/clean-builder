@@ -916,6 +916,203 @@ artifacts/
         await File.WriteAllTextAsync(Path.Combine(solutionPath, ".gitignore"), gitignoreContent);
         Console.WriteLine($"✓ Generated .gitignore");
 
+        // .cursorrules
+        var cursorRulesContent = $@"# Clean Architecture & DDD Development Rules
+
+You are a Senior Software Engineer working on a Clean Architecture solution with Domain-Driven Design (DDD) principles.
+
+## Architecture Principles
+
+### Layer Dependencies (STRICTLY ENFORCED)
+- **Domain Layer**: Must have ZERO dependencies on other layers. Only depends on SharedKernel (if present).
+- **SharedKernel Layer**: Must have ZERO dependencies. Contains shared domain concepts.
+- **Application Layer**: Can ONLY depend on Domain and SharedKernel. NO framework dependencies.
+- **Infrastructure Layer**: Can depend on Application, Domain, and SharedKernel. Contains framework implementations.
+- **API Layer**: Can depend on Application, Domain, and SharedKernel. NO direct Infrastructure dependencies.
+
+### Dependency Direction Rules
+1. ✅ Dependencies MUST point INWARD (toward Domain)
+2. ❌ NEVER create outward dependencies (e.g., Domain → Application)
+3. ✅ Use Dependency Inversion: Define interfaces in Application, implement in Infrastructure
+4. ❌ NEVER add framework references (EF Core, ASP.NET Core) to Domain or Application layers
+
+## Code Organization
+
+### Domain Layer ({config.BaseNamespace}.Domain)
+- **Entities**: Rich domain models with business logic, NOT anemic data models
+- **Aggregates**: Cluster of entities treated as a single unit with aggregate root
+- **Value Objects**: Immutable objects defined by their values
+- **Domain Services**: Domain logic that doesn't naturally fit in entities
+- **Specifications**: Encapsulate business rules and queries
+- **Domain Events**: Represent something that happened in the domain
+
+### Application Layer ({config.BaseNamespace}.Application)
+- **Use Cases**: Application-specific business operations (one use case per operation)
+- **Interfaces**: Define contracts for repositories and services (Dependency Inversion)
+- **DTOs**: Data Transfer Objects for input/output
+- **Validators**: Input validation logic (use FluentValidation if available)
+- **Mappings**: Object-to-object mappings (use AutoMapper or manual mapping)
+- **Common**: Application-level utilities and helpers
+
+### Infrastructure Layer ({config.BaseNamespace}.Infrastructure)
+- **Persistence**: EF Core DbContext, configurations, migrations, repositories
+- **Repositories**: Implementations of repository interfaces from Application
+- **Services**: External service integrations (email, SMS, payment, etc.)
+- **Messaging**: Message queue, event bus implementations
+
+### API Layer ({config.BaseNamespace}.API)
+- **Controllers**: Thin controllers that delegate to Application layer
+- **Filters**: Action filters, exception filters
+- **Middleware**: Custom middleware for cross-cutting concerns
+- **Contracts**: API request/response models (can be DTOs from Application)
+- **Extensions**: Service registration extensions
+
+## Coding Standards
+
+### C# Best Practices
+1. **Use nullable reference types**: Always enable nullable context
+2. **Prefer records for DTOs**: Use `record` for immutable data structures
+3. **Use primary constructors**: When appropriate (C# 12+)
+4. **Async/Await**: Use async methods for I/O operations, avoid `Task.Result` or `.Wait()`
+5. **Exception Handling**: Catch specific exceptions, log appropriately, don't swallow exceptions
+6. **LINQ**: Prefer method syntax, use `FirstOrDefault()` over `First()` when item might not exist
+
+### Naming Conventions
+- **Classes**: PascalCase (e.g., `UserService`, `OrderRepository`)
+- **Interfaces**: PascalCase with 'I' prefix (e.g., `IUserService`, `IOrderRepository`)
+- **Methods**: PascalCase (e.g., `GetUserById`, `CreateOrder`)
+- **Properties**: PascalCase (e.g., `UserId`, `OrderDate`)
+- **Private fields**: camelCase with underscore prefix (e.g., `_userRepository`)
+- **Constants**: PascalCase (e.g., `MaxRetryCount`)
+- **Namespaces**: Match folder structure (e.g., `{config.BaseNamespace}.Application.UseCases`)
+
+### Clean Code Principles
+1. **Single Responsibility**: Each class/method should have one reason to change
+2. **DRY (Don't Repeat Yourself)**: Extract common logic to shared methods/classes
+3. **SOLID Principles**: Apply all five principles consistently
+4. **Meaningful Names**: Use descriptive names that reveal intent
+5. **Small Methods**: Keep methods focused and under 20-30 lines when possible
+6. **Comments**: Code should be self-documenting; add comments only for 'why', not 'what'
+
+## DDD Patterns
+
+### Entities
+- Have identity (Id property)
+- Can change over time
+- Equality based on identity
+- Example: `User`, `Order`, `Product`
+
+### Value Objects
+- No identity, defined by values
+- Immutable
+- Equality based on all properties
+- Example: `Email`, `Address`, `Money`
+
+### Aggregates
+- Cluster of entities and value objects
+- Have aggregate root (single entry point)
+- Enforce invariants
+- Example: `Order` (root) with `OrderItem` entities
+
+### Domain Services
+- Operations that don't naturally fit in entities
+- Stateless
+- Example: `PricingService`, `TaxCalculationService`
+
+### Repositories
+- Abstract data access
+- Defined in Application layer (interface)
+- Implemented in Infrastructure layer
+- Return domain entities, not DTOs
+
+## Testing Guidelines
+
+### Unit Tests
+- Test one unit in isolation
+- Use mocks for dependencies
+- Test business logic in Domain and Application layers
+- Follow AAA pattern: Arrange, Act, Assert
+
+### Integration Tests
+- Test layer interactions
+- Use real database (test database)
+- Test API endpoints end-to-end
+- Clean up test data after tests
+
+### Test Naming
+- Format: `MethodName_Scenario_ExpectedBehavior`
+- Example: `GetUserById_WhenUserExists_ReturnsUser`
+
+## API Development
+
+### RESTful Principles
+- Use proper HTTP verbs (GET, POST, PUT, DELETE, PATCH)
+- Use appropriate status codes (200, 201, 400, 404, 500)
+- Version APIs when breaking changes occur
+- Use consistent URL patterns: `/api/v1/resource/{{id}}`
+
+### Error Handling
+- Return consistent error response format
+- Include error codes and messages
+- Log errors appropriately
+- Don't expose internal implementation details
+
+## Performance & Security
+
+### Performance
+- Use async/await for I/O operations
+- Implement pagination for large datasets
+- Use caching where appropriate
+- Profile and optimize hot paths
+
+### Security
+- Validate all inputs
+- Use parameterized queries (EF Core handles this)
+- Implement authentication and authorization
+- Never expose sensitive data in logs or responses
+- Use HTTPS in production
+
+## When Writing Code
+
+1. **Think in Layers**: Always consider which layer the code belongs to
+2. **Respect Boundaries**: Don't violate layer dependencies
+3. **Use Interfaces**: Define contracts in Application, implement in Infrastructure
+4. **Keep Domain Pure**: Business logic belongs in Domain, not in Infrastructure or API
+5. **Test First**: Write tests for business logic before implementation
+6. **Refactor Regularly**: Keep code clean and maintainable
+
+## Common Mistakes to Avoid
+
+❌ Adding framework dependencies to Domain or Application
+❌ Creating circular dependencies between layers
+❌ Putting business logic in controllers or repositories
+❌ Using anemic domain models (data-only classes)
+❌ Direct database access from Application layer
+❌ Mixing concerns (e.g., validation in entities AND DTOs)
+❌ Creating God classes (classes that do too much)
+❌ Ignoring nullable reference types warnings
+
+## Code Review Checklist
+
+Before submitting code, ensure:
+- [ ] Layer dependencies are correct
+- [ ] No framework references in Domain/Application
+- [ ] Business logic is in Domain layer
+- [ ] Interfaces are in Application, implementations in Infrastructure
+- [ ] Tests are written and passing
+- [ ] Code follows naming conventions
+- [ ] Nullable reference types are handled correctly
+- [ ] Async/await is used for I/O operations
+- [ ] Error handling is appropriate
+- [ ] Code is self-documenting (minimal comments needed)
+
+---
+
+**Remember**: Clean Architecture is about independence. The Domain should be completely independent and testable without any external dependencies.
+";
+        await File.WriteAllTextAsync(Path.Combine(solutionPath, ".cursorrules"), cursorRulesContent);
+        Console.WriteLine($"✓ Generated .cursorrules");
+
         // README.md - Always generate comprehensive README
         var readmeContent = $@"# {config.SolutionName}
 

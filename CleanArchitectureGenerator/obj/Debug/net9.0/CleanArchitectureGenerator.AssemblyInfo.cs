@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CleanArchitectureGenerator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2b12c4e022de039cfed593d163497162346400aa")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ec73bd1368de8a87a11efc336676952f6065900b")]
 [assembly: System.Reflection.AssemblyProductAttribute("CleanArchitectureGenerator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CleanArchitectureGenerator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
