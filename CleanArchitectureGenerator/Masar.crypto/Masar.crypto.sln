@@ -1,0 +1,63 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AA3A6625-4149-426C-8E85-A999E83E52FE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A1E2EE60-3F18-4F18-BDE9-49CFF6D5CB8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masar.crypto.Domain", "src\Masar.crypto.Domain\Masar.crypto.Domain.csproj", "{E95C6295-E100-4FD8-AE48-62C5B2EB81F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masar.crypto.Application", "src\Masar.crypto.Application\Masar.crypto.Application.csproj", "{101D3AEE-0233-4FAD-A31E-54A0B84C057F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masar.crypto.Infrastructure", "src\Masar.crypto.Infrastructure\Masar.crypto.Infrastructure.csproj", "{641DEDD6-C1A3-4D27-A54C-5F2EBEE72D49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masar.crypto.API", "src\Masar.crypto.API\Masar.crypto.API.csproj", "{6AE60E03-7A7D-4096-969F-EDD06181A4BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masar.crypto.UnitTests", "tests\Masar.crypto.UnitTests\Masar.crypto.UnitTests.csproj", "{7DE58118-0564-479A-AE71-7C8DB7D326FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masar.crypto.IntegrationTests", "tests\Masar.crypto.IntegrationTests\Masar.crypto.IntegrationTests.csproj", "{26EFC06E-B30E-4B9B-8A72-B6CE0270BBDD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E95C6295-E100-4FD8-AE48-62C5B2EB81F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E95C6295-E100-4FD8-AE48-62C5B2EB81F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E95C6295-E100-4FD8-AE48-62C5B2EB81F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E95C6295-E100-4FD8-AE48-62C5B2EB81F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{101D3AEE-0233-4FAD-A31E-54A0B84C057F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{101D3AEE-0233-4FAD-A31E-54A0B84C057F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{101D3AEE-0233-4FAD-A31E-54A0B84C057F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{101D3AEE-0233-4FAD-A31E-54A0B84C057F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{641DEDD6-C1A3-4D27-A54C-5F2EBEE72D49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{641DEDD6-C1A3-4D27-A54C-5F2EBEE72D49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{641DEDD6-C1A3-4D27-A54C-5F2EBEE72D49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{641DEDD6-C1A3-4D27-A54C-5F2EBEE72D49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AE60E03-7A7D-4096-969F-EDD06181A4BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AE60E03-7A7D-4096-969F-EDD06181A4BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AE60E03-7A7D-4096-969F-EDD06181A4BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AE60E03-7A7D-4096-969F-EDD06181A4BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DE58118-0564-479A-AE71-7C8DB7D326FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DE58118-0564-479A-AE71-7C8DB7D326FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DE58118-0564-479A-AE71-7C8DB7D326FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DE58118-0564-479A-AE71-7C8DB7D326FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26EFC06E-B30E-4B9B-8A72-B6CE0270BBDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26EFC06E-B30E-4B9B-8A72-B6CE0270BBDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26EFC06E-B30E-4B9B-8A72-B6CE0270BBDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26EFC06E-B30E-4B9B-8A72-B6CE0270BBDD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E95C6295-E100-4FD8-AE48-62C5B2EB81F9} = {AA3A6625-4149-426C-8E85-A999E83E52FE}
+		{101D3AEE-0233-4FAD-A31E-54A0B84C057F} = {AA3A6625-4149-426C-8E85-A999E83E52FE}
+		{641DEDD6-C1A3-4D27-A54C-5F2EBEE72D49} = {AA3A6625-4149-426C-8E85-A999E83E52FE}
+		{6AE60E03-7A7D-4096-969F-EDD06181A4BD} = {AA3A6625-4149-426C-8E85-A999E83E52FE}
+		{7DE58118-0564-479A-AE71-7C8DB7D326FE} = {A1E2EE60-3F18-4F18-BDE9-49CFF6D5CB8C}
+		{26EFC06E-B30E-4B9B-8A72-B6CE0270BBDD} = {A1E2EE60-3F18-4F18-BDE9-49CFF6D5CB8C}
+	EndGlobalSection
+EndGlobal

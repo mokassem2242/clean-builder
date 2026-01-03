@@ -1,0 +1,14 @@
+W:\new mentality\clean builder\CleanArchitectureGenerator\bin\Debug\net9.0\CleanArchitectureGenerator.exe
+W:\new mentality\clean builder\CleanArchitectureGenerator\bin\Debug\net9.0\CleanArchitectureGenerator.deps.json
+W:\new mentality\clean builder\CleanArchitectureGenerator\bin\Debug\net9.0\CleanArchitectureGenerator.runtimeconfig.json
+W:\new mentality\clean builder\CleanArchitectureGenerator\bin\Debug\net9.0\CleanArchitectureGenerator.dll
+W:\new mentality\clean builder\CleanArchitectureGenerator\bin\Debug\net9.0\CleanArchitectureGenerator.pdb
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.GeneratedMSBuildEditorConfig.editorconfig
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.AssemblyInfoInputs.cache
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.AssemblyInfo.cs
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.csproj.CoreCompileInputs.cache
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.dll
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\refint\CleanArchitectureGenerator.dll
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.pdb
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.genruntimeconfig.cache
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\ref\CleanArchitectureGenerator.dll
