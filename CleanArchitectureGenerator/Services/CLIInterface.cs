@@ -124,7 +124,8 @@ public class CLIInterface
         config.IncludeCQRS = PromptYesNo("Include CQRS structure (Commands/Queries)?", false);
         config.IncludeEFCore = PromptYesNo("Include EF Core infrastructure setup?", false);
         config.IncludeTests = PromptYesNo("Include test projects (Unit/Integration)?", false);
-        config.IncludeReadme = PromptYesNo("Generate README with architecture guidelines?", true);
+        // README is always generated - no need to prompt
+        config.IncludeReadme = true;
 
         return config;
     }

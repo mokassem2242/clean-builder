@@ -855,16 +855,14 @@ artifacts/
         await File.WriteAllTextAsync(Path.Combine(solutionPath, ".gitignore"), gitignoreContent);
         Console.WriteLine($"✓ Generated .gitignore");
 
-        // README.md
-        if (config.IncludeReadme)
-        {
-            var readmeContent = $@"# {config.SolutionName}
+        // README.md - Always generate comprehensive README
+        var readmeContent = $@"# {config.SolutionName}
 
-## Architecture
+## Overview
 
-This solution follows **Clean Architecture** principles with **Domain-Driven Design (DDD)** alignment.
+This solution follows **Clean Architecture** principles with **Domain-Driven Design (DDD)** alignment. It provides a structured, maintainable foundation for building scalable .NET applications.
 
-### Solution Structure
+## Solution Structure
 
 ```
 {config.SolutionName}/
@@ -874,55 +872,180 @@ This solution follows **Clean Architecture** principles with **Domain-Driven Des
 ├── {config.SolutionName}.sln
 ├── Directory.Build.props
 ├── .editorconfig
+├── .gitignore
 └── README.md
 ```
 
-### Project Structure
+## Projects
 
-{string.Join("\n", config.SelectedLayers.Select(l => $"- **{config.BaseNamespace}.{l}** (src/): {GetLayerDescription(l)}"))}
-{(config.IncludeTests ? $"\n### Test Projects\n\n- **{config.BaseNamespace}.UnitTests** (tests/): Unit tests for all layers\n- **{config.BaseNamespace}.IntegrationTests** (tests/): Integration tests" : "")}
+### Source Projects (src/)
+
+{string.Join("\n\n", config.SelectedLayers.Select(l => $"#### {config.BaseNamespace}.{l}\n\n{GetLayerDescription(l)}\n\n**Location**: `src/{config.BaseNamespace}.{l}/`"))}
+
+{(config.SelectedLayers.Contains(LayerType.API) ? $"\n#### API Type\n\nThis solution uses **{config.SelectedApiType}** for the API layer.\n" : "")}
+
+{(config.IncludeCQRS ? "\n#### CQRS Structure\n\nThis solution includes CQRS (Command Query Responsibility Segregation) structure:\n- **Commands**: Located in `Application/UseCases/Commands/`\n- **Queries**: Located in `Application/UseCases/Queries/`\n" : "")}
+
+{(config.IncludeEFCore ? "\n#### Entity Framework Core\n\nEF Core infrastructure is configured in the Infrastructure layer:\n- **DbContext**: `Infrastructure/Persistence/DbContext/ApplicationDbContext.cs`\n- **Configurations**: `Infrastructure/Persistence/Configurations/`\n- **Migrations**: `Infrastructure/Persistence/Migrations/`\n" : "")}
+
+{(config.IncludeTests ? $"\n### Test Projects (tests/)\n\n#### {config.BaseNamespace}.UnitTests\n\nUnit tests for all layers. Tests individual components in isolation.\n\n**Location**: `tests/{config.BaseNamespace}.UnitTests/`\n\n#### {config.BaseNamespace}.IntegrationTests\n\nIntegration tests that verify the interaction between layers and external dependencies.\n\n**Location**: `tests/{config.BaseNamespace}.IntegrationTests/`\n" : "")}
+
+## Architecture
+
+### Clean Architecture Principles
+
+This solution enforces Clean Architecture dependency rules:
+
+```
+┌─────────────┐
+│     API     │
+└──────┬──────┘
+       │
+       ↓
+┌─────────────┐
+│ Application │
+└──────┬──────┘
+       │
+       ↓
+┌─────────────┐
+│   Domain    │ ← Innermost layer (no dependencies)
+└─────────────┘
+       ↑
+       │
+┌─────────────┐
+│Infrastructure│
+└──────────────┘
+```
 
 ### Dependency Rules
 
-- Application → Domain
-- Infrastructure → Application
-- API → Application
-- Domain MUST NOT reference any other project
+- ✅ **Application → Domain**: Application layer depends on Domain
+- ✅ **Infrastructure → Application**: Infrastructure implements Application interfaces
+- ✅ **API → Application**: API layer depends on Application
+- ✅ **Domain → Nothing**: Domain has no external dependencies
 
-### Getting Started
+**Important**: Dependencies always point **inward** toward the Domain layer.
 
-1. Restore packages:
+### Layer Responsibilities
+
+#### Domain Layer
+- **Purpose**: Core business logic and domain rules
+- **Contains**: Entities, Value Objects, Aggregates, Domain Services, Domain Events, Specifications
+- **Rules**: 
+  - No framework dependencies
+  - No external references
+  - Pure business logic only
+
+#### Application Layer
+- **Purpose**: Application use cases and business workflows
+- **Contains**: Use Cases, Interfaces, DTOs, Validators, Mappings
+- **Rules**:
+  - Depends only on Domain
+  - Defines interfaces for Infrastructure to implement
+  - Contains application-specific business logic
+
+#### Infrastructure Layer
+- **Purpose**: External concerns and technical implementations
+- **Contains**: Persistence (DbContext, Configurations, Migrations), Repositories, Services, Messaging
+- **Rules**:
+  - Implements interfaces from Application layer
+  - Handles data access, external APIs, file I/O
+  - Can depend on Application and Domain
+
+#### API Layer
+- **Purpose**: Entry point for external clients
+- **Contains**: Controllers, Filters, Middleware, Contracts, Extensions
+- **Rules**:
+  - Depends only on Application layer
+  - No business logic
+  - Handles HTTP concerns only
+
+## Getting Started
+
+### Prerequisites
+
+- .NET SDK {config.TargetFramework.Replace("net", "")} or later
+- Your preferred IDE (Visual Studio, Rider, VS Code)
+
+### Setup
+
+1. **Restore NuGet packages**:
    ```bash
    dotnet restore
    ```
 
-2. Build the solution:
+2. **Build the solution**:
    ```bash
    dotnet build
    ```
 
-3. Run tests (if applicable):
+3. **Run tests** (if included):
    ```bash
    dotnet test
    ```
 
-### Architecture Guidelines
+4. **Run the application** (if API layer is included):
+   ```bash
+   cd src/{config.BaseNamespace}.API
+   dotnet run
+   ```
 
-- **Domain Layer**: Contains business logic, entities, value objects, and domain services. No framework dependencies.
-- **Application Layer**: Contains use cases, interfaces, DTOs, and application services.
-- **Infrastructure Layer**: Implements interfaces from Application layer (repositories, external services).
-- **API Layer**: Contains controllers, middleware, and API-specific concerns. No business logic.
+## Development Guidelines
 
-### Development
+### Adding New Features
 
-Follow Clean Architecture principles:
-- Dependencies point inward (toward Domain)
-- Domain is framework-agnostic
-- Business logic resides in Domain and Application layers
+1. **Domain Layer**: Start by defining entities and domain rules
+2. **Application Layer**: Create use cases and define interfaces
+3. **Infrastructure Layer**: Implement the interfaces
+4. **API Layer**: Expose endpoints that call use cases
+
+### Code Organization
+
+- **Entities**: Domain entities representing business concepts
+- **Value Objects**: Immutable objects defined by their values
+- **Aggregates**: Cluster of entities treated as a single unit
+- **Use Cases**: Application-specific business operations
+- **Repositories**: Data access abstraction (defined in Application, implemented in Infrastructure)
+- **DTOs**: Data Transfer Objects for API communication
+
+### Testing Strategy
+
+{(config.IncludeTests ? @"- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test layer interactions and external dependencies
+- Run tests frequently: `dotnet test`
+" : "Add test projects to enable comprehensive testing.")}
+
+## Configuration Files
+
+- **`.editorconfig`**: Code style and formatting rules
+- **`Directory.Build.props`**: Common MSBuild properties for all projects
+- **`.gitignore`**: Git ignore patterns for .NET projects
+
+## Best Practices
+
+1. ✅ **Keep Domain Pure**: Never add framework dependencies to Domain
+2. ✅ **Dependency Direction**: Always point dependencies inward
+3. ✅ **Interface Segregation**: Define interfaces in Application, implement in Infrastructure
+4. ✅ **Single Responsibility**: Each layer has a clear, single purpose
+5. ✅ **Test Coverage**: Write tests for business logic and critical paths
+
+## Resources
+
+- [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [Domain-Driven Design](https://martinfowler.com/bliki/DomainDrivenDesign.html)
+- [.NET Documentation](https://docs.microsoft.com/dotnet/)
+
+## License
+
+[Specify your license here]
+
+---
+
+**Generated by**: Clean Architecture Solution Generator
+**Generated on**: {DateTime.Now:yyyy-MM-dd}
 ";
             await File.WriteAllTextAsync(Path.Combine(solutionPath, "README.md"), readmeContent);
             Console.WriteLine($"✓ Generated README.md");
-        }
     }
 
     private string GetLayerDescription(LayerType layer)
