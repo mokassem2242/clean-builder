@@ -46,8 +46,8 @@ public class SolutionGenerator
                 // Create folder structure
                 await CreateFolderStructureAsync(projectPath, definition, config);
 
-                // Remove default boilerplate files
-                await RemoveBoilerplateFilesAsync(projectPath);
+                // Remove default boilerplate files (but preserve Program.cs for API projects)
+                await RemoveBoilerplateFilesAsync(projectPath, layer);
             }
 
             // Add project references
@@ -144,6 +144,10 @@ EndGlobal
     <RootNamespace>{config.BaseNamespace}.{layer}</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include=""Swashbuckle.AspNetCore"" Version=""6.9.0"" />
+  </ItemGroup>
+
 </Project>
 ";
                     break;
@@ -157,6 +161,10 @@ EndGlobal
     <Nullable>enable</Nullable>
     <RootNamespace>{config.BaseNamespace}.{layer}</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include=""Swashbuckle.AspNetCore"" Version=""6.9.0"" />
+  </ItemGroup>
 
 </Project>
 ";
@@ -233,9 +241,7 @@ EndGlobal
         switch (config.SelectedApiType)
         {
             case ApiType.WebAPI:
-                programContent = $@"using {config.BaseNamespace}.Application.Interfaces;
-
-var builder = WebApplication.CreateBuilder(args);
+                programContent = $@"var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -260,9 +266,7 @@ app.Run();
                 break;
 
             case ApiType.MinimalAPI:
-                programContent = $@"using {config.BaseNamespace}.Application.Interfaces;
-
-var builder = WebApplication.CreateBuilder(args);
+                programContent = $@"var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
@@ -287,9 +291,7 @@ app.Run();
                 break;
 
             case ApiType.gRPC:
-                programContent = $@"using {config.BaseNamespace}.Application.Interfaces;
-
-var builder = WebApplication.CreateBuilder(args);
+                programContent = $@"var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddGrpc();
@@ -359,11 +361,29 @@ app.Run();
         Console.WriteLine($"  ✓ Created folder structure ({foldersToCreate.Count} folders)");
     }
 
-    private Task RemoveBoilerplateFilesAsync(string projectPath)
+    private Task RemoveBoilerplateFilesAsync(string projectPath, LayerType layer)
     {
         var projectName = Path.GetFileName(projectPath);
+        
+        // For API projects, don't delete Program.cs (it's needed as entry point)
+        // For other projects, remove any Program.cs that might have been created by templates
         var boilerplateFiles = Directory.GetFiles(projectPath, "*.cs", SearchOption.TopDirectoryOnly)
-            .Where(f => Path.GetFileName(f).StartsWith("Class") || Path.GetFileName(f).StartsWith("Program"))
+            .Where(f => 
+            {
+                var fileName = Path.GetFileName(f);
+                // Always remove Class files
+                if (fileName.StartsWith("Class"))
+                    return true;
+                
+                // For API projects, keep Program.cs (it's the entry point)
+                // For other projects, remove Program.cs if it exists (from templates)
+                if (fileName.StartsWith("Program"))
+                {
+                    return layer != LayerType.API; // Only remove if NOT API project
+                }
+                
+                return false;
+            })
             .ToList();
 
         foreach (var file in boilerplateFiles)
@@ -383,8 +403,32 @@ app.Run();
     {
         // Note: projectPaths now contain paths within src/ folder
         
+        // Update dependencies dynamically based on SharedKernel selection
+        if (config.SelectedLayers.Contains(LayerType.SharedKernel))
+        {
+            // Domain can depend on SharedKernel
+            if (config.SelectedLayers.Contains(LayerType.Domain))
+            {
+                var domainDef = layerDefinitions[LayerType.Domain];
+                if (!domainDef.Dependencies.Contains(LayerType.SharedKernel))
+                {
+                    domainDef.Dependencies.Add(LayerType.SharedKernel);
+                }
+            }
+            
+            // Application can depend on SharedKernel (in addition to Domain)
+            if (config.SelectedLayers.Contains(LayerType.Application))
+            {
+                var appDef = layerDefinitions[LayerType.Application];
+                if (!appDef.Dependencies.Contains(LayerType.SharedKernel))
+                {
+                    appDef.Dependencies.Add(LayerType.SharedKernel);
+                }
+            }
+        }
+        
         // Validate dependency rules before adding references
-        var validation = DependencyValidator.ValidateDependencyRules(layerDefinitions);
+        var validation = DependencyValidator.ValidateDependencyRules(layerDefinitions, config);
         if (!validation.IsValid)
         {
             throw new InvalidOperationException($"Dependency rule violation detected:\n{validation.ErrorMessage}");
@@ -397,10 +441,20 @@ app.Run();
             var projectName = $"{config.BaseNamespace}.{layer}";
             var projectFile = Path.Combine(projectPath, $"{projectName}.csproj");
 
-            // Explicit check: Domain must never have dependencies
+            // Explicit check: SharedKernel must never have dependencies
+            if (layer == LayerType.SharedKernel && definition.Dependencies.Any())
+            {
+                throw new InvalidOperationException("❌ CRITICAL: SharedKernel layer must not have any dependencies. This violates DDD principles.");
+            }
+            
+            // Domain can only depend on SharedKernel (if SharedKernel is selected)
             if (layer == LayerType.Domain && definition.Dependencies.Any())
             {
-                throw new InvalidOperationException("❌ CRITICAL: Domain layer must not have any dependencies. This violates Clean Architecture principles.");
+                var invalidDeps = definition.Dependencies.Where(d => d != LayerType.SharedKernel).ToList();
+                if (invalidDeps.Any())
+                {
+                    throw new InvalidOperationException($"❌ CRITICAL: Domain layer can only depend on SharedKernel, but found: {string.Join(", ", invalidDeps)}");
+                }
             }
 
             foreach (var dependency in definition.Dependencies)
@@ -460,7 +514,15 @@ app.Run();
         }
 
         // Generate GUIDs for each project and check for duplicates
-        foreach (var (layer, projectPath) in projectPaths)
+        // Order projects: SharedKernel first, then Domain, then others
+        var orderedProjects = projectPaths.OrderBy(p => 
+            p.Key == LayerType.SharedKernel ? 0 :
+            p.Key == LayerType.Domain ? 1 :
+            p.Key == LayerType.Application ? 2 :
+            p.Key == LayerType.Infrastructure ? 3 : 4)
+            .ToList();
+
+        foreach (var (layer, projectPath) in orderedProjects)
         {
             var projectName = Path.GetFileName(projectPath);
             var projectFile = Path.Combine(projectPath, $"{projectName}.csproj");
@@ -644,13 +706,12 @@ app.Run();
         var dbContextFile = Path.Combine(dbContextPath, "ApplicationDbContext.cs");
 
         var dbContextContent = $@"using Microsoft.EntityFrameworkCore;
-using {config.BaseNamespace}.Application.Interfaces;
 
 namespace {config.BaseNamespace}.Infrastructure.Persistence.DbContext;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
 {{
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public ApplicationDbContext(Microsoft.EntityFrameworkCore.DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {{
     }}
@@ -658,7 +719,7 @@ public class ApplicationDbContext : DbContext
     // Add DbSet properties here
     // Example: public DbSet<Entity> Entities {{ get; set; }} = null!;
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
     {{
         base.OnModelCreating(modelBuilder);
         
@@ -908,7 +969,12 @@ This solution enforces Clean Architecture dependency rules:
        │
        ↓
 ┌─────────────┐
-│   Domain    │ ← Innermost layer (no dependencies)
+│   Domain    │
+└──────┬──────┘
+       │
+       ↓
+┌─────────────┐
+│SharedKernel │ ← Innermost layer (no dependencies){(config.SelectedLayers.Contains(LayerType.SharedKernel) ? " ✓" : "")}
 └─────────────┘
        ↑
        │
@@ -920,9 +986,11 @@ This solution enforces Clean Architecture dependency rules:
 ### Dependency Rules
 
 - ✅ **Application → Domain**: Application layer depends on Domain
+{(config.SelectedLayers.Contains(LayerType.SharedKernel) ? "- ✅ **Application → SharedKernel**: Application can also depend on SharedKernel\n- ✅ **Domain → SharedKernel**: Domain can depend on SharedKernel\n" : "")}
 - ✅ **Infrastructure → Application**: Infrastructure implements Application interfaces
 - ✅ **API → Application**: API layer depends on Application
-- ✅ **Domain → Nothing**: Domain has no external dependencies
+- ✅ **Domain → Nothing/SharedKernel**: Domain has no external dependencies (except SharedKernel if selected)
+{(config.SelectedLayers.Contains(LayerType.SharedKernel) ? "- ✅ **SharedKernel → Nothing**: SharedKernel has no dependencies\n" : "")}
 
 **Important**: Dependencies always point **inward** toward the Domain layer.
 
@@ -936,11 +1004,20 @@ This solution enforces Clean Architecture dependency rules:
   - No external references
   - Pure business logic only
 
+#### SharedKernel Layer (Optional)
+- **Purpose**: Shared domain concepts and common abstractions (DDD pattern)
+- **Contains**: Shared Entities, Value Objects, Enums, Constants, Common Interfaces
+- **Rules**:
+  - No framework dependencies
+  - No external references
+  - Shared between multiple bounded contexts
+  - Pure domain concepts only
+
 #### Application Layer
 - **Purpose**: Application use cases and business workflows
 - **Contains**: Use Cases, Interfaces, DTOs, Validators, Mappings
 - **Rules**:
-  - Depends only on Domain
+  - Depends on Domain (and SharedKernel if selected)
   - Defines interfaces for Infrastructure to implement
   - Contains application-specific business logic
 
@@ -1052,6 +1129,7 @@ This solution enforces Clean Architecture dependency rules:
     {
         return layer switch
         {
+            LayerType.SharedKernel => "Shared domain concepts, entities, value objects, enums, constants, and common abstractions (DDD Shared Kernel pattern). Contains reusable domain elements shared across bounded contexts.",
             LayerType.Domain => "Core business logic, entities, and domain rules",
             LayerType.Application => "Use cases, interfaces, and application services",
             LayerType.Infrastructure => "Data access, external services, and infrastructure implementations",

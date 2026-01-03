@@ -70,9 +70,18 @@ public class CLIInterface
 
         // Layer Selection
         Console.WriteLine("Select layers to include (Domain is mandatory):");
+        Console.WriteLine("Note: SharedKernel is optional and contains shared domain concepts (DDD pattern)");
         var layerDefinitions = LayerConfigurationService.GetLayerDefinitions();
 
-        foreach (var layer in Enum.GetValues<LayerType>())
+        // Order layers: SharedKernel first (if selected), then Domain, then others
+        var layersInOrder = Enum.GetValues<LayerType>()
+            .OrderBy(l => l == LayerType.SharedKernel ? 0 : 
+                         l == LayerType.Domain ? 1 : 
+                         l == LayerType.Application ? 2 :
+                         l == LayerType.Infrastructure ? 3 : 4)
+            .ToList();
+
+        foreach (var layer in layersInOrder)
         {
             var definition = layerDefinitions[layer];
             var defaultSelection = definition.IsMandatory ? "Y" : "N";

@@ -9,13 +9,33 @@ public class LayerConfigurationService
         return new Dictionary<LayerType, LayerDefinition>
         {
             {
+                LayerType.SharedKernel,
+                new LayerDefinition
+                {
+                    Type = LayerType.SharedKernel,
+                    ProjectType = "classlib",
+                    IsMandatory = false,
+                    Dependencies = new List<LayerType>(), // SharedKernel has no dependencies
+                    Folders = new List<string>
+                    {
+                        "Entities",
+                        "ValueObjects",
+                        "Enums",
+                        "Constants",
+                        "Exceptions",
+                        "Interfaces",
+                        "Common"
+                    }
+                }
+            },
+            {
                 LayerType.Domain,
                 new LayerDefinition
                 {
                     Type = LayerType.Domain,
                     ProjectType = "classlib",
                     IsMandatory = true,
-                    Dependencies = new List<LayerType>(),
+                    Dependencies = new List<LayerType>(), // Will be updated based on SharedKernel selection
                     Folders = new List<string>
                     {
                         "Entities",
@@ -36,7 +56,7 @@ public class LayerConfigurationService
                     Type = LayerType.Application,
                     ProjectType = "classlib",
                     IsMandatory = false,
-                    Dependencies = new List<LayerType> { LayerType.Domain },
+                    Dependencies = new List<LayerType> { LayerType.Domain }, // Will be updated based on SharedKernel selection
                     Folders = new List<string>
                     {
                         "UseCases",

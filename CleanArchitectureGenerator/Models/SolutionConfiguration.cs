@@ -15,6 +15,7 @@ public class SolutionConfiguration
 
 public enum LayerType
 {
+    SharedKernel,
     Domain,
     Application,
     Infrastructure,

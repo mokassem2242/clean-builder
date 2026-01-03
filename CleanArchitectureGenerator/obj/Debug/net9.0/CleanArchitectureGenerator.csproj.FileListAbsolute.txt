@@ -12,3 +12,4 @@ W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\refin
 W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.pdb
 W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.genruntimeconfig.cache
 W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\ref\CleanArchitectureGenerator.dll
+W:\new mentality\clean builder\CleanArchitectureGenerator\obj\Debug\net9.0\CleanArchitectureGenerator.sourcelink.json

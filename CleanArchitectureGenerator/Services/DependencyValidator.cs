@@ -12,27 +12,42 @@ public static class DependencyValidator
     /// Validates that the dependency configuration follows Clean Architecture rules.
     /// </summary>
     /// <param name="layerDefinitions">The layer definitions to validate</param>
+    /// <param name="config">Solution configuration to check for SharedKernel</param>
     /// <returns>Validation result with any violations</returns>
-    public static ValidationResult ValidateDependencyRules(Dictionary<LayerType, LayerDefinition> layerDefinitions)
+    public static ValidationResult ValidateDependencyRules(Dictionary<LayerType, LayerDefinition> layerDefinitions, SolutionConfiguration? config = null)
     {
         var violations = new List<string>();
+        var hasSharedKernel = config?.SelectedLayers.Contains(LayerType.SharedKernel) ?? 
+                             layerDefinitions.ContainsKey(LayerType.SharedKernel) && 
+                             layerDefinitions[LayerType.SharedKernel].Dependencies.Any() == false;
 
-        // Rule 1: Domain MUST NOT have any dependencies
-        var domainDefinition = layerDefinitions[LayerType.Domain];
-        if (domainDefinition.Dependencies.Any())
+        // Rule 1: SharedKernel MUST NOT have any dependencies
+        if (layerDefinitions.ContainsKey(LayerType.SharedKernel))
         {
-            violations.Add($"❌ VIOLATION: Domain layer must not have dependencies, but found: {string.Join(", ", domainDefinition.Dependencies)}");
+            var sharedKernelDefinition = layerDefinitions[LayerType.SharedKernel];
+            if (sharedKernelDefinition.Dependencies.Any())
+            {
+                violations.Add($"❌ VIOLATION: SharedKernel layer must not have dependencies, but found: {string.Join(", ", sharedKernelDefinition.Dependencies)}");
+            }
         }
 
-        // Rule 2: Application can only depend on Domain
+        // Rule 2: Domain can only depend on SharedKernel (if SharedKernel exists)
+        var domainDefinition = layerDefinitions[LayerType.Domain];
+        var invalidDomainDeps = domainDefinition.Dependencies.Where(d => d != LayerType.SharedKernel).ToList();
+        if (invalidDomainDeps.Any())
+        {
+            violations.Add($"❌ VIOLATION: Domain layer can only depend on SharedKernel, but found: {string.Join(", ", invalidDomainDeps)}");
+        }
+
+        // Rule 3: Application can depend on Domain and SharedKernel
         var applicationDefinition = layerDefinitions[LayerType.Application];
-        var invalidAppDeps = applicationDefinition.Dependencies.Where(d => d != LayerType.Domain).ToList();
+        var invalidAppDeps = applicationDefinition.Dependencies.Where(d => d != LayerType.Domain && d != LayerType.SharedKernel).ToList();
         if (invalidAppDeps.Any())
         {
-            violations.Add($"❌ VIOLATION: Application layer can only depend on Domain, but found: {string.Join(", ", invalidAppDeps)}");
+            violations.Add($"❌ VIOLATION: Application layer can only depend on Domain and SharedKernel, but found: {string.Join(", ", invalidAppDeps)}");
         }
 
-        // Rule 3: Infrastructure can only depend on Application (and transitively Domain)
+        // Rule 4: Infrastructure can only depend on Application (and transitively Domain/SharedKernel)
         var infrastructureDefinition = layerDefinitions[LayerType.Infrastructure];
         var invalidInfraDeps = infrastructureDefinition.Dependencies.Where(d => d != LayerType.Application).ToList();
         if (invalidInfraDeps.Any())
@@ -40,7 +55,7 @@ public static class DependencyValidator
             violations.Add($"❌ VIOLATION: Infrastructure layer can only depend on Application, but found: {string.Join(", ", invalidInfraDeps)}");
         }
 
-        // Rule 4: API can only depend on Application (and transitively Domain)
+        // Rule 5: API can only depend on Application (and transitively Domain/SharedKernel)
         var apiDefinition = layerDefinitions[LayerType.API];
         var invalidApiDeps = apiDefinition.Dependencies.Where(d => d != LayerType.Application).ToList();
         if (invalidApiDeps.Any())
@@ -48,7 +63,7 @@ public static class DependencyValidator
             violations.Add($"❌ VIOLATION: API layer can only depend on Application, but found: {string.Join(", ", invalidApiDeps)}");
         }
 
-        // Rule 5: No circular dependencies (should not happen with current structure, but check anyway)
+        // Rule 6: No circular dependencies (should not happen with current structure, but check anyway)
         if (HasCircularDependencies(layerDefinitions))
         {
             violations.Add("❌ VIOLATION: Circular dependencies detected!");
@@ -67,16 +82,22 @@ public static class DependencyValidator
     /// </summary>
     public static bool IsValidDependency(LayerType fromLayer, LayerType toLayer)
     {
-        // Domain cannot depend on anything
-        if (fromLayer == LayerType.Domain)
+        // SharedKernel cannot depend on anything
+        if (fromLayer == LayerType.SharedKernel)
         {
             return false;
         }
 
-        // Application can only depend on Domain
+        // Domain can only depend on SharedKernel
+        if (fromLayer == LayerType.Domain)
+        {
+            return toLayer == LayerType.SharedKernel;
+        }
+
+        // Application can depend on Domain and SharedKernel
         if (fromLayer == LayerType.Application)
         {
-            return toLayer == LayerType.Domain;
+            return toLayer == LayerType.Domain || toLayer == LayerType.SharedKernel;
         }
 
         // Infrastructure can only depend on Application
@@ -101,8 +122,9 @@ public static class DependencyValidator
     {
         return layer switch
         {
-            LayerType.Domain => new List<LayerType>(), // Domain has no dependencies
-            LayerType.Application => new List<LayerType> { LayerType.Domain },
+            LayerType.SharedKernel => new List<LayerType>(), // SharedKernel has no dependencies
+            LayerType.Domain => new List<LayerType>(), // Domain has no dependencies by default (can depend on SharedKernel if selected)
+            LayerType.Application => new List<LayerType> { LayerType.Domain }, // Can also depend on SharedKernel if selected
             LayerType.Infrastructure => new List<LayerType> { LayerType.Application },
             LayerType.API => new List<LayerType> { LayerType.Application },
             _ => new List<LayerType>()
